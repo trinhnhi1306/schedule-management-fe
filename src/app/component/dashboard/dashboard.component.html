@@ -1,0 +1,24 @@
+<section class="content">
+  <nav class="bg-blue-500 p-4 sticky top-0 z-10">
+    <p-toast></p-toast>
+    <div class="flex items-center justify-between">
+      <div class="text-white font-semibold text-2xl">
+        My Training Schedule Management Dashboard
+      </div>
+      <div
+        class="flex gap-x-2 text-white justify-items-center hover:cursor-pointer"
+      >
+        <div class="flex">
+          <div class="flex-col mr-2">
+            <label class="block font-bold">{{ user.fullName }}</label>
+            <label class="block text-right">{{ user.role }}</label>
+          </div>
+          <img class="h-12 w-12 rounded-full" [src]="image" alt="" />
+        </div>
+        <a class="p-2" (click)="logout()"><i class="pi pi-sign-out"></i></a>
+      </div>
+    </div>
+  </nav>
+  <p-menubar [model]="menuItems"></p-menubar>
+  <router-outlet></router-outlet>
+</section>

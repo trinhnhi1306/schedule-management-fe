@@ -1,0 +1,157 @@
+<p-toast></p-toast>
+<div class="card">
+  <p-toolbar styleClass="gap-2">
+    <ng-template pTemplate="left">
+      <button
+        pButton
+        pRipple
+        label="New"
+        icon="pi pi-plus"
+        class="p-button-success mr-2"
+        (click)="add()"
+      ></button>
+    </ng-template>
+
+    <ng-template pTemplate="right">
+      <div class="mx-auto mt-4">
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input
+            id="search"
+            type="text"
+            pInputText
+            placeholder="Search"
+            class="border-gray-300 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline p-inputtext-sm w-full border-2 rounded-lg pl-10 pr-2 py-1"
+          />
+        </span>
+      </div>
+    </ng-template>
+  </p-toolbar>
+  <p-table [value]="clazzes" [tableStyle]="{ 'min-width': '50rem' }">
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 3%">ID</th>
+        <th style="width: 25%">Class Name</th>
+        <th style="width: 47%">Description</th>
+        <th style="width: 20%">Course Name</th>
+        <th style="width: 5%"></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-clazz>
+      <tr>
+        <td>{{ clazz.id }}</td>
+        <td>{{ clazz.name }}</td>
+        <td>{{ clazz.description }}</td>
+        <td>{{ clazz.course.name }}</td>
+        <td>
+          <div class="flex gap-3">
+            <div class="hover:cursor-pointer" (click)="edit(clazz)">
+              <i class="pi pi-pencil" style="color: blue"></i>
+            </div>
+            <div class="hover:cursor-pointer" (click)="delete(clazz)">
+              <i class="pi pi-trash" style="color: red"></i>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+  <p-paginator
+    (onPageChange)="onPageChange($event)"
+    [first]="first"
+    [rows]="rows"
+    [totalRecords]="totalRecords"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+    [rowsPerPageOptions]="[5, 10, 20, 30]"
+  ></p-paginator>
+</div>
+<p-dialog
+  [(visible)]="dialog"
+  [style]="{ width: '550px' }"
+  header="Class Details"
+  [modal]="true"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <div class="space-y-4">
+      <div class="field">
+        <label class="block font-medium text-gray-700">
+          Name <span class="text-red-500">*</span></label
+        >
+        <input
+          type="text"
+          pInputText
+          id="name"
+          [(ngModel)]="clazz.name"
+          required
+          autofocus
+          class="border-gray-300 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline mt-1 p-2 block w-full shadow-sm sm:text-sm border rounded-md"
+        />
+      </div>
+      <div class="field">
+        <label class="block font-medium text-gray-700"> Description </label>
+        <textarea
+          rows="5"
+          cols="30"
+          pInputTextarea
+          [(ngModel)]="clazz.description"
+          class="border-gray-300 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline mt-1 p-2 block w-full shadow-sm sm:text-sm border rounded-md"
+        ></textarea>
+      </div>
+      <div class="field">
+        <label class="block font-medium text-gray-700">
+          Course <span class="text-red-500">*</span></label
+        >
+        <p-dropdown
+          appendTo="body"
+          [(ngModel)]="clazz.course"
+          id="clazz"
+          [options]="courses"
+          optionLabel="name"
+          [filter]="true"
+          filterBy="name"
+          [showClear]="true"
+          placeholder="Select a Course"
+          class="mt-1 block w-full sm:text-sm"
+        >
+        </p-dropdown>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      pRipple
+      label="Cancel"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="hideDialog()"
+    ></button>
+    <button
+      pButton
+      pRipple
+      label="Save"
+      icon="pi pi-check"
+      class="p-button-text"
+      (click)="save()"
+    ></button>
+  </ng-template>
+</p-dialog>
+<p-confirmDialog #cd [style]="{ width: '450px' }">
+  <ng-template pTemplate="footer">
+    <p-button
+      styleClass="p-button-secondary"
+      icon="pi pi-times"
+      label="No"
+      (click)="cd.reject()"
+    ></p-button>
+    <p-button
+      styleClass="p-button-danger"
+      icon="pi pi-check"
+      label="Yes"
+      (click)="cd.accept()"
+    ></p-button>
+  </ng-template>
+</p-confirmDialog>

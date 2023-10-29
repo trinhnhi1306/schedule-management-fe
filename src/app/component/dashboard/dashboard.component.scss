@@ -1,0 +1,11 @@
+/* Tạo hiệu ứng hover */
+.p-menuitem:hover {
+    background-color: #7dc069; /* Màu nền khi rê chuột vào */
+    color: #333; /* Màu chữ khi rê chuột vào */
+}
+
+/* Tạo hiệu ứng active (được chọn) */
+.ui-menubar-root-list > li.ui-state-active > a {
+    background-color: #007ad9; /* Màu nền khi mục được chọn */
+    color: #fff; /* Màu chữ khi mục được chọn */
+}

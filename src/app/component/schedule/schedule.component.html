@@ -1,0 +1,318 @@
+<p-toast></p-toast>
+<div class="card">
+  <p-toolbar styleClass="gap-2">
+    <ng-template pTemplate="left">
+      <button
+        pButton
+        pRipple
+        label="New"
+        icon="pi pi-plus"
+        class="p-button-success mr-2"
+        (click)="add()"
+      ></button>
+    </ng-template>
+
+    <ng-template pTemplate="right">
+      <div class="mx-auto mt-4">
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input
+            id="search"
+            type="text"
+            pInputText
+            placeholder="Search"
+            class="border-gray-300 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline p-inputtext-sm w-full border-2 rounded-lg pl-10 pr-2 py-1"
+          />
+        </span>
+      </div>
+    </ng-template>
+  </p-toolbar>
+  <p-table [value]="schedules" [tableStyle]="{ 'min-width': '50rem' }">
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 3%">ID</th>
+        <th style="width: 15%">Session Name</th>
+        <th style="width: 8%">Date</th>
+        <th style="width: 8%">Time</th>
+        <th style="width: 5%">Training Type</th>
+        <th style="width: 5%">Class Type</th>
+        <th style="width: 10%">Class Details</th>
+        <th style="width: 11%">Trainers</th>
+        <th style="width: 20%">Class Name</th>
+        <th style="width: 10%">Organizer</th>
+        <th style="width: 5%"></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-schedule>
+      <tr>
+        <td>{{ schedule.id }}</td>
+        <td>{{ schedule.sessionName }}</td>
+        <td>{{ schedule.startTime | date : "MMM dd, yyyy" }}</td>
+        <td>
+          {{ schedule.startTime | date : "HH:mm" }} -
+          {{ schedule.endTime | date : "HH:mm" }}
+        </td>
+        <td>
+          <p-tag
+            [value]="schedule.trainingType"
+            [severity]="getSeverity(schedule.trainingType)"
+          ></p-tag>
+        </td>
+        <td>{{ schedule.clazzType }}</td>
+        <td>
+          <ng-container *ngIf="schedule.clazzType == 'ZOOM'; else elseTemplate">
+            <a
+              href="{{ schedule.clazzDetails }}"
+              target="_blank"
+              class="hover:underline text-blue-700"
+              >Zoom link</a
+            >
+          </ng-container>
+          <ng-template #elseTemplate>
+            {{ schedule.clazzDetails }}
+          </ng-template>
+        </td>
+        <td>
+          <ol class="list-decimal">
+            <li *ngFor="let trainer of schedule.trainers">
+              <p-chip
+                [label]="trainer.firstName + ' ' + trainer.lastName"
+                [image]="path + '/users/images/' + trainer.avatar"
+              ></p-chip>
+            </li>
+          </ol>
+        </td>
+        <td>{{ schedule.clazz.name }}</td>
+        <td>{{ schedule.organizer.fullName }}</td>
+        <td>
+          <div class="flex gap-3">
+            <div class="hover:cursor-pointer" (click)="edit(schedule)">
+              <i class="pi pi-pencil" style="color: blue"></i>
+            </div>
+            <div class="hover:cursor-pointer" (click)="delete(schedule)">
+              <i class="pi pi-trash" style="color: red"></i>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+  <p-paginator
+    (onPageChange)="onPageChange($event)"
+    [first]="first"
+    [rows]="rows"
+    [totalRecords]="totalRecords"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+    [rowsPerPageOptions]="[5, 10, 20, 30]"
+  ></p-paginator>
+</div>
+<p-dialog
+  [(visible)]="dialog"
+  [style]="{ width: '550px' }"
+  header="Schedule Details"
+  [modal]="true"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <div class="space-y-4">
+      <div class="field">
+        <label class="block font-medium text-gray-700">Organizer</label>
+        <label class="block text-sm text-gray-700"
+          >{{ schedule.organizer.fullName }}
+          <span class="italic">({{ schedule.organizer.email }})</span></label
+        >
+      </div>
+      <div class="field">
+        <label class="block font-medium text-gray-700">
+          Session Name <span class="text-red-500">*</span></label
+        >
+        <input
+          type="text"
+          pInputText
+          id="sessionName"
+          [(ngModel)]="schedule.sessionName"
+          required
+          autofocus
+          class="border-gray-300 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline mt-1 p-2 block w-full shadow-sm sm:text-sm border rounded-md"
+        />
+      </div>
+      <div class="field">
+        <label class="block font-medium text-gray-700"> Training Type </label>
+        <p-dropdown
+          appendTo="body"
+          [(ngModel)]="schedule.trainingType"
+          id="trainingType"
+          [options]="trainingTypes"
+          class="mt-1 block sm:text-sm"
+        >
+          <ng-template pTemplate="selectedItem">
+            <p-tag
+              [value]="schedule.trainingType || ''"
+              [severity]="getSeverity(schedule.trainingType || '')"
+            ></p-tag>
+          </ng-template>
+          <ng-template let-option pTemplate="item">
+            <p-tag
+              [value]="option.label"
+              [severity]="getSeverity(option.label)"
+            ></p-tag>
+          </ng-template>
+        </p-dropdown>
+      </div>
+      <div class="field">
+        <label class="block font-medium text-gray-700">Class Type</label>
+        <div class="flex gap-4">
+          <div class="field-radiobutton">
+            <p-radioButton
+              id="clazzType1"
+              name="clazzType"
+              value="ZOOM"
+              [(ngModel)]="schedule.clazzType"
+            ></p-radioButton>
+            <label class="ml-2 text-sm text-gray-700">Zoom</label>
+          </div>
+          <div class="field-radiobutton">
+            <p-radioButton
+              id="clazzType2"
+              name="clazzType"
+              value="CLASSROOM"
+              [(ngModel)]="schedule.clazzType"
+            ></p-radioButton>
+            <label class="ml-2 text-sm text-gray-700">Classroom</label>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="block font-medium text-gray-700"> Date/Time </label>
+        <div class="flex mt-1 gap-2">
+          <p-calendar
+            [(ngModel)]="date"
+            appendTo="body"
+            [showButtonBar]="true"
+            class="w-28"
+          ></p-calendar>
+          <p-calendar
+            [(ngModel)]="startTime"
+            [timeOnly]="true"
+            appendTo="body"
+            placeholder="HH:mm"
+            class="w-20"
+          ></p-calendar>
+          <p class="py-3">:</p>
+          <p-calendar
+            [(ngModel)]="endTime"
+            [timeOnly]="true"
+            appendTo="body"
+            placeholder="HH:mm"
+            class="w-20"
+          ></p-calendar>
+          <p class="py-4 text-xs italic">(dd/mm/yyyy hh:mm - format: 24h)</p>
+        </div>
+      </div>
+      <div class="field">
+        <label class="block font-medium text-gray-700">
+          Class Details <span class="text-red-500">*</span></label
+        >
+        <input
+          id="clazzDetails"
+          type="text"
+          pInputText
+          [(ngModel)]="schedule.clazzDetails"
+          class="border-gray-300 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline mt-1 p-2 block w-full shadow-sm sm:text-sm border rounded-md"
+        />
+      </div>
+      <div class="field">
+        <label class="block font-medium text-gray-700">
+          Trainers <span class="text-red-500">*</span></label
+        >
+        <p-multiSelect
+          appendTo="body"
+          [options]="trainers"
+          [(ngModel)]="schedule.trainers"
+          defaultLabel="Select trainers"
+          optionLabel="fullName"
+        >
+          <ng-template let-value pTemplate="selectedItems">
+            <div
+              class="flex align-items-center gap-2"
+              *ngFor="let option of schedule.trainers"
+            >
+              <p-chip
+                [label]="option.firstName + ' ' + option.lastName"
+                [image]="path + '/users/images/' + option.avatar"
+                [removable]="true"
+                (onRemove)="remove(option)"
+              ></p-chip>
+            </div>
+            <div *ngIf="!schedule.trainers || schedule.trainers.length === 0">
+              Select Trainers
+            </div>
+          </ng-template>
+          <ng-template let-trainer pTemplate="item">
+            <div class="flex align-items-center gap-2">
+              <img
+                [src]="path + '/users/images/' + trainer.avatar"
+                style="width: 24px"
+              />
+              <div>{{ trainer.firstName }} {{ trainer.lastName }}</div>
+            </div>
+          </ng-template>
+        </p-multiSelect>
+      </div>
+      <div class="field">
+        <label class="block font-medium text-gray-700">
+          Class <span class="text-red-500">*</span></label
+        >
+        <p-dropdown
+          appendTo="body"
+          [(ngModel)]="schedule.clazz"
+          id="clazz"
+          [options]="clazzes"
+          optionLabel="name"
+          [filter]="true"
+          filterBy="name"
+          [showClear]="true"
+          placeholder="Select a Class"
+          class="mt-1 block w-full sm:text-sm"
+        >
+        </p-dropdown>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      pRipple
+      label="Cancel"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="hideDialog()"
+    ></button>
+    <button
+      pButton
+      pRipple
+      label="Save"
+      icon="pi pi-check"
+      class="p-button-text"
+      (click)="save()"
+    ></button>
+  </ng-template>
+</p-dialog>
+<p-confirmDialog #cd [style]="{ width: '450px' }">
+  <ng-template pTemplate="footer">
+    <p-button
+      styleClass="p-button-secondary"
+      icon="pi pi-times"
+      label="No"
+      (click)="cd.reject()"
+    ></p-button>
+    <p-button
+      styleClass="p-button-danger"
+      icon="pi pi-check"
+      label="Yes"
+      (click)="cd.accept()"
+    ></p-button>
+  </ng-template>
+</p-confirmDialog>
