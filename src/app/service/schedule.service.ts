@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Schedule } from '../interface/schedule';
 import { environment } from 'src/environments/environment';
+import { ScheduleSearch } from '../interface/schedulesearch';
 
 const httpOptions ={
   headers:new HttpHeaders({'Content-Type':'Application/json'})
@@ -30,6 +31,10 @@ export class ScheduleService {
 
   createNew(schedule: Schedule): Observable<any> {
     return this.httpClient.post<any>(apiUrl, schedule).pipe()
+  }
+
+  getSearchPage(schedule: ScheduleSearch, params: any): Observable<any> {
+    return this.httpClient.post<any>(apiUrl + "/search", schedule, { params: params }).pipe()
   }
 
 }

@@ -18,6 +18,7 @@ import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { ChipModule } from 'primeng/chip';
 import { CalendarModule } from 'primeng/calendar';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { DashboardComponent } from './component/dashboard/dashboard.component';
@@ -58,12 +59,13 @@ import { DatePipe } from '@angular/common';
     ChipModule,
     TagModule,
     TableModule,
+    OverlayPanelModule,
     MenubarModule,
     HttpClientModule,
     JwtModule.forRoot({
       config: {
         tokenGetter: () => {
-          return JSON.parse(localStorage.getItem('token')).accessToken;
+          return JSON.parse(localStorage.getItem('token'))?.accessToken;
         },
         allowedDomains: ['localhost:4200'],
       },

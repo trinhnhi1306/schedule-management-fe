@@ -27,7 +27,7 @@ export class AuthService {
     // Check whether the token is expired and return
     // true or false
     return !this.jwtHelper.isTokenExpired(
-      JSON.parse(localStorage.getItem('token')).accessToken
+      JSON.parse(localStorage.getItem('token'))?.accessToken
     );
   }
 }

@@ -2,18 +2,24 @@
 <div class="card">
   <p-toolbar styleClass="gap-2">
     <ng-template pTemplate="left">
-      <button
-        pButton
-        pRipple
+      <p-button
+        styleClass="p-button-success px-4 py-[10px] h-10"
+        (onClick)="add()"
         label="New"
         icon="pi pi-plus"
-        class="p-button-success mr-2"
-        (click)="add()"
-      ></button>
+      >
+      </p-button>
+      <p-button
+        styleClass="p-button-danger px-4 py-[10px] h-10 ml-2"
+        (onClick)="export()"
+        label="Export"
+        icon="pi pi-download"
+      >
+      </p-button>
     </ng-template>
 
     <ng-template pTemplate="right">
-      <div class="mx-auto mt-4">
+      <div class="flex justify-item-center gap-2">
         <span class="p-input-icon-left">
           <i class="pi pi-search"></i>
           <input
@@ -21,9 +27,15 @@
             type="text"
             pInputText
             placeholder="Search"
-            class="border-gray-300 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline p-inputtext-sm w-full border-2 rounded-lg pl-10 pr-2 py-1"
+            class="transition-all outline outline-2 outline-transparent hover:border-blue-500 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline w-full border rounded-lg pl-10 pr-2 py-1 h-10"
           />
         </span>
+        <p-button
+          styleClass="p-button-info p-button-outlined px-4 py-[10px] h-10"
+          label="Clear"
+          icon="pi pi-filter-slash"
+          (onClick)="clearFilter()"
+        ></p-button>
       </div>
     </ng-template>
   </p-toolbar>
@@ -31,16 +43,305 @@
     <ng-template pTemplate="header">
       <tr>
         <th style="width: 3%">ID</th>
-        <th style="width: 15%">Session Name</th>
-        <th style="width: 8%">Date</th>
+        <th style="width: 15%">
+          <div class="flex justify-items-center">
+            <p class="py-3">Session Name</p>
+            <p-button
+              icon="pi pi-filter"
+              [styleClass]="
+                'p-button-rounded p-button-text h-2 ' +
+                (scheduleSearch.sessionName
+                  ? 'p-button-info'
+                  : 'p-button-secondary')
+              "
+              (onClick)="opSessionName.toggle($event)"
+            ></p-button>
+            <p-overlayPanel #opSessionName [showCloseIcon]="true">
+              <input
+                type="text"
+                pInputText
+                id="sessionName"
+                [(ngModel)]="scheduleSearch.sessionName"
+                required
+                autofocus
+                class="transition-all outline outline-2 outline-transparent hover:border-blue-500 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline mt-1 p-2 w-full sm:text-sm border border-gray-300 rounded-md"
+              />
+              <div class="flex justify-between mt-3">
+                <p-button
+                  styleClass="p-button-outlined p-2 text-sm"
+                  (onClick)="singleClear('sessionName')"
+                  label="Clear"
+                >
+                </p-button>
+                <p-button
+                  styleClass="p-button-info p-2 text-sm"
+                  (onClick)="applyAndClose($event, opSessionName)"
+                  label="Apply"
+                >
+                </p-button>
+              </div>
+            </p-overlayPanel>
+          </div>
+        </th>
+        <th style="width: 8%">
+          <div class="flex justify-items-center">
+            <p class="py-3">Date</p>
+            <p-button
+              icon="pi pi-filter"
+              [styleClass]="
+                'p-button-rounded p-button-text h-2 ' +
+                (scheduleSearch.startTime
+                  ? 'p-button-info'
+                  : 'p-button-secondary')
+              "
+              (onClick)="opDate.toggle($event)"
+            ></p-button>
+            <p-overlayPanel #opDate [showCloseIcon]="true">
+              <input
+                type="text"
+                pInputText
+                id="dateSearch"
+                [(ngModel)]="scheduleSearch.startTime"
+                required
+                autofocus
+                class="transition-all outline outline-2 outline-transparent hover:border-blue-500 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline mt-1 p-2 w-full sm:text-sm border border-gray-300 rounded-md"
+              />
+              <div class="flex justify-between mt-3">
+                <p-button
+                  styleClass="p-button-outlined p-2 text-sm"
+                  (onClick)="singleClear('date')"
+                  label="Clear"
+                >
+                </p-button>
+                <p-button
+                  styleClass="p-button-info p-2 text-sm"
+                  (onClick)="applyAndClose($event, opDate)"
+                  label="Apply"
+                >
+                </p-button>
+              </div>
+            </p-overlayPanel>
+          </div>
+        </th>
         <th style="width: 8%">Time</th>
-        <th style="width: 5%">Training Type</th>
-        <th style="width: 5%">Class Type</th>
+        <th style="width: 10%">
+          <div class="flex justify-items-center">
+            <p class="py-3">Training Type</p>
+            <p-button
+              icon="pi pi-filter"
+              [styleClass]="
+                'p-button-rounded p-button-text h-2 ' +
+                (scheduleSearch.trainingType
+                  ? 'p-button-info'
+                  : 'p-button-secondary')
+              "
+              (onClick)="opTrainingType.toggle($event)"
+            ></p-button>
+            <p-overlayPanel #opTrainingType [showCloseIcon]="true">
+              <p-dropdown
+                appendTo="body"
+                [(ngModel)]="scheduleSearch.trainingType"
+                id="trainingType"
+                placeholder="Any"
+                [options]="trainingTypes"
+                styleClass="w-40"
+              >
+                <ng-template pTemplate="selectedItem">
+                  <p-tag
+                    [value]="scheduleSearch.trainingType || ''"
+                    [severity]="getSeverity(scheduleSearch.trainingType || '')"
+                  ></p-tag>
+                </ng-template>
+                <ng-template let-option pTemplate="item">
+                  <p-tag
+                    [value]="option.label"
+                    [severity]="getSeverity(option.label)"
+                  ></p-tag>
+                </ng-template>
+              </p-dropdown>
+              <div class="flex justify-between mt-3">
+                <p-button
+                  styleClass="p-button-outlined p-2 text-sm"
+                  (onClick)="singleClear('trainingType')"
+                  label="Clear"
+                >
+                </p-button>
+                <p-button
+                  styleClass="p-button-info p-2 text-sm"
+                  (onClick)="applyAndClose($event, opTrainingType)"
+                  label="Apply"
+                >
+                </p-button>
+              </div>
+            </p-overlayPanel>
+          </div>
+        </th>
+        <th style="width: 10%">
+          <div class="flex justify-items-center">
+            <p class="py-3">Class Type</p>
+            <p-button
+              icon="pi pi-filter"
+              [styleClass]="
+                'p-button-rounded p-button-text h-2 ' +
+                (scheduleSearch.clazzType
+                  ? 'p-button-info'
+                  : 'p-button-secondary')
+              "
+              (onClick)="opClazzType.toggle($event)"
+            ></p-button>
+            <p-overlayPanel #opClazzType [showCloseIcon]="true">
+              <p-dropdown
+                appendTo="body"
+                [(ngModel)]="scheduleSearch.clazzType"
+                id="clazzType"
+                placeholder="Any"
+                optionLabel="label"
+                optionValue="value"
+                [options]="clazzTypes"
+                styleClass="w-40"
+              >
+              </p-dropdown>
+              <div class="flex justify-between mt-3">
+                <p-button
+                  styleClass="p-button-outlined p-2 text-sm"
+                  (onClick)="singleClear('clazzType')"
+                  label="Clear"
+                >
+                </p-button>
+                <p-button
+                  styleClass="p-button-info p-2 text-sm"
+                  (onClick)="applyAndClose($event, opClazzType)"
+                  label="Apply"
+                >
+                </p-button>
+              </div>
+            </p-overlayPanel>
+          </div>
+        </th>
         <th style="width: 10%">Class Details</th>
-        <th style="width: 11%">Trainers</th>
-        <th style="width: 20%">Class Name</th>
-        <th style="width: 10%">Organizer</th>
-        <th style="width: 5%"></th>
+        <th style="width: 11%">
+          <div class="flex justify-items-center">
+            <p class="py-3">Trainers</p>
+            <p-button
+              icon="pi pi-filter"
+              [styleClass]="
+                'p-button-rounded p-button-text h-2 ' +
+                (scheduleSearch.trainers
+                  ? 'p-button-info'
+                  : 'p-button-secondary')
+              "
+              (onClick)="opTrainerName.toggle($event)"
+            ></p-button>
+            <p-overlayPanel #opTrainerName [showCloseIcon]="true">
+              <!-- <input
+                type="text"
+                pInputText
+                id="trainerName"
+                [(ngModel)]="scheduleSearch.trainers"
+                required
+                autofocus
+                class="transition-all outline outline-2 outline-transparent hover:border-blue-500 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline mt-1 p-2 w-full sm:text-sm border border-gray-300 rounded-md"
+              /> -->
+              <p-multiSelect
+                appendTo="body"
+                [options]="trainers"
+                [(ngModel)]="scheduleSearch.trainers"
+                defaultLabel="Select trainers"
+                optionLabel="fullName"
+                styleClass="w-[265px]"
+              >
+                <ng-template let-value pTemplate="selectedItems">
+                  <div
+                    class="flex align-items-center gap-2"
+                    *ngFor="let option of scheduleSearch.trainers"
+                  >
+                    <p-chip
+                      [label]="option.firstName + ' ' + option.lastName"
+                      [image]="path + '/users/images/' + option.avatar"
+                      [removable]="true"
+                      (onRemove)="removeSearch(option)"
+                    ></p-chip>
+                  </div>
+                  <div
+                    *ngIf="
+                      !scheduleSearch.trainers ||
+                      scheduleSearch.trainers.length === 0
+                    "
+                  >
+                    Any
+                  </div>
+                </ng-template>
+                <ng-template let-trainer pTemplate="item">
+                  <div class="flex align-items-center gap-2">
+                    <img
+                      [src]="path + '/users/images/' + trainer.avatar"
+                      style="width: 24px"
+                    />
+                    <div>{{ trainer.firstName }} {{ trainer.lastName }}</div>
+                  </div>
+                </ng-template>
+              </p-multiSelect>
+              <div class="flex justify-between mt-3">
+                <p-button
+                  styleClass="p-button-outlined p-2 text-sm"
+                  (onClick)="singleClear('trainers')"
+                  label="Clear"
+                >
+                </p-button>
+                <p-button
+                  styleClass="p-button-info p-2 text-sm"
+                  (onClick)="applyAndClose($event, opTrainerName)"
+                  label="Apply"
+                >
+                </p-button>
+              </div>
+            </p-overlayPanel>
+          </div>
+        </th>
+        <th style="width: 15%">
+          <div class="flex justify-items-center">
+            <p class="py-3">Class Name</p>
+            <p-button
+              icon="pi pi-filter"
+              [styleClass]="
+                'p-button-rounded p-button-text h-2 ' +
+                (scheduleSearch.clazz ? 'p-button-info' : 'p-button-secondary')
+              "
+              (onClick)="opClazzName.toggle($event)"
+            ></p-button>
+            <p-overlayPanel #opClazzName [showCloseIcon]="true">
+              <p-dropdown
+                appendTo="body"
+                [(ngModel)]="scheduleSearch.clazz"
+                id="clazz"
+                [options]="clazzes"
+                optionLabel="name"
+                [filter]="true"
+                filterBy="name"
+                [showClear]="true"
+                placeholder="Any"
+                styleClass="w-[265px]"
+              >
+              </p-dropdown>
+              <div class="flex justify-between mt-3">
+                <p-button
+                  styleClass="p-button-outlined p-2 text-sm"
+                  (onClick)="singleClear('clazz')"
+                  label="Clear"
+                >
+                </p-button>
+                <p-button
+                  styleClass="p-button-info p-2 text-sm"
+                  (onClick)="applyAndClose($event, opClazzName)"
+                  label="Apply"
+                >
+                </p-button>
+              </div>
+            </p-overlayPanel>
+          </div>
+        </th>
+        <th style="width: 8%">Organizer</th>
+        <th style="width: 2%"></th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-schedule>
@@ -134,7 +435,7 @@
           [(ngModel)]="schedule.sessionName"
           required
           autofocus
-          class="border-gray-300 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline mt-1 p-2 block w-full shadow-sm sm:text-sm border rounded-md"
+          class="transition-all outline outline-2 outline-transparent hover:border-blue-500 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline mt-1 p-2 w-full sm:text-sm border border-gray-300 rounded-md"
         />
       </div>
       <div class="field">
@@ -219,7 +520,7 @@
           type="text"
           pInputText
           [(ngModel)]="schedule.clazzDetails"
-          class="border-gray-300 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline mt-1 p-2 block w-full shadow-sm sm:text-sm border rounded-md"
+          class="transition-all outline outline-2 outline-transparent hover:border-blue-500 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline mt-1 p-2 w-full sm:text-sm border border-gray-300 rounded-md"
         />
       </div>
       <div class="field">

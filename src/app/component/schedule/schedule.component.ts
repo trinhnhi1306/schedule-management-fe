@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Clazz } from 'src/app/interface/clazz';
 import { Schedule } from 'src/app/interface/schedule';
+import { ScheduleSearch } from 'src/app/interface/schedulesearch';
 import { User } from 'src/app/interface/user';
 import { ClazzService } from 'src/app/service/clazz.service';
 import { ScheduleService } from 'src/app/service/schedule.service';
@@ -31,12 +32,15 @@ export class ScheduleComponent {
   clazzes: Clazz[] = [];
   schedule: Schedule = {};
   trainingTypes: any[] = [];
+  clazzTypes: any[] = [];
   dialog: boolean = false;
   date!: Date;
   startTime!: Date;
   endTime!: Date;
 
   path: string = '';
+
+  scheduleSearch: ScheduleSearch = {};
 
   constructor(
     private scheduleService: ScheduleService,
@@ -56,7 +60,55 @@ export class ScheduleComponent {
       { label: 'AD_HOC', value: 'AD_HOC' },
     ];
 
+    this.clazzTypes = [
+      { label: 'Classroom', value: 'CLASSROOM' },
+      { label: 'Zoom', value: 'ZOOM' },
+    ];
+
     this.path = environment.apiUrl;
+
+    this.getTrainers();
+    this.getClazzes();
+  }
+
+  // toggle(label: string) {
+  //   this.filterToggle.set(label, !this.filterToggle.get(label));
+  // }
+
+  applyAndClose(event: any, element: any) {
+    element.hide(event);
+    this.pageNum = 1;
+    this.getSearchPage();
+  }
+
+  clearFilter() {
+    this.scheduleSearch = {}
+    this.getSearchPage()
+  }
+
+  singleClear(label: string) {
+    switch (label) {
+      case 'sessionName':
+        this.scheduleSearch.sessionName = null;
+        break;
+      case 'date':
+        this.scheduleSearch.startTime = null;
+        this.scheduleSearch.endTime = null;
+        break;
+      case 'trainingType':
+        this.scheduleSearch.trainingType = null;
+        break;
+      case 'clazzType':
+        this.scheduleSearch.clazzType = null;
+        break;
+      case 'trainers':
+        this.scheduleSearch.trainers = null;
+        break;
+      case 'clazz':
+        this.scheduleSearch.clazz = null;
+        break;
+    }
+    this.getSearchPage();
   }
 
   getTrainers() {
@@ -90,6 +142,7 @@ export class ScheduleComponent {
   }
 
   getPage() {
+    this.scheduleSearch = {};
     const params = {
       pageNum: this.pageNum,
       pageSize: this.pageSize,
@@ -116,13 +169,40 @@ export class ScheduleComponent {
     );
   }
 
+  getSearchPage() {
+    const params = {
+      pageNum: this.pageNum,
+      pageSize: this.pageSize,
+    };
+
+    this.scheduleService.getSearchPage(this.scheduleSearch, params).subscribe(
+      (response: any) => {
+        this.schedules = response.data.content;
+        this.totalElements = response.data.totalElements;
+        this.totalPages = response.data.totalPages;
+
+        this.first = this.pageNum * this.pageSize - this.pageSize;
+        this.last = this.first + this.pageSize - 1;
+        this.rows = this.pageSize;
+        this.totalRecords = this.totalElements;
+      },
+      (error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Rejected',
+          detail: error.error.message,
+        });
+      }
+    );
+  }
+
   onPageChange(event: any) {
     this.first = event.first;
     this.rows = event.rows;
 
     this.pageNum = (this.first + this.rows) / this.rows;
     this.pageSize = this.rows;
-    this.getPage();
+    this.getSearchPage();
   }
 
   hideDialog() {
@@ -189,6 +269,8 @@ export class ScheduleComponent {
     this.date = new Date();
   }
 
+  export() {}
+
   edit(schedule: Schedule) {
     this.getTrainers();
     this.getClazzes();
@@ -245,6 +327,12 @@ export class ScheduleComponent {
 
   remove(option: User) {
     this.schedule.trainers = this.schedule.trainers.filter(
+      (item) => item.id !== option.id
+    );
+  }
+
+  removeSearch(option: User) {
+    this.scheduleSearch.trainers = this.scheduleSearch.trainers.filter(
       (item) => item.id !== option.id
     );
   }
