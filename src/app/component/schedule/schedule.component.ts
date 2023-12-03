@@ -9,6 +9,7 @@ import { ClazzService } from 'src/app/service/clazz.service';
 import { ScheduleService } from 'src/app/service/schedule.service';
 import { UserService } from 'src/app/service/user.service';
 import { environment } from 'src/environments/environment';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-schedule',
@@ -41,6 +42,15 @@ export class ScheduleComponent {
   path: string = '';
 
   scheduleSearch: ScheduleSearch = {};
+  startTimeSearch!: Date;
+  endTimeSearch!: Date;
+  monthSearch!: Date;
+  yearSearch!: Date;
+
+  dateOption: string = 'day';
+
+  /**Default name for excel file when download**/
+  fileName = 'ExcelSheet.xlsx';
 
   constructor(
     private scheduleService: ScheduleService,
@@ -71,19 +81,76 @@ export class ScheduleComponent {
     this.getClazzes();
   }
 
-  // toggle(label: string) {
-  //   this.filterToggle.set(label, !this.filterToggle.get(label));
-  // }
-
   applyAndClose(event: any, element: any) {
     element.hide(event);
+
+    switch (this.dateOption) {
+      case 'day': {
+        if (this.startTimeSearch != null) {
+          const startDateStr =
+            this.datepipe.transform(this.startTimeSearch, 'yyyy-MM-dd') + 'T';
+          this.scheduleSearch.startTime = startDateStr + '00:00:00';
+        }
+        if (this.endTimeSearch != null) {
+          const endDateStr =
+            this.datepipe.transform(this.endTimeSearch, 'yyyy-MM-dd') + 'T';
+          this.scheduleSearch.endTime = endDateStr + '23:59:59';
+        }
+        break;
+      }
+      case 'month': {
+        if (this.monthSearch != null) {
+          var firstDay =
+            this.datepipe.transform(
+              new Date(
+                this.monthSearch.getFullYear(),
+                this.monthSearch.getMonth(),
+                1
+              ),
+              'yyyy-MM-dd'
+            ) + 'T';
+          var lastDay =
+            this.datepipe.transform(
+              new Date(
+                this.monthSearch.getFullYear(),
+                this.monthSearch.getMonth() + 1,
+                0
+              ),
+              'yyyy-MM-dd'
+            ) + 'T';
+          this.scheduleSearch.startTime = firstDay + '00:00:00';
+          this.scheduleSearch.endTime = lastDay + '23:59:59';
+        }
+        break;
+      }
+      case 'year': {
+        var theFirst =
+          this.datepipe.transform(
+            new Date(this.yearSearch.getFullYear(), 0, 1),
+            'yyyy-MM-dd'
+          ) + 'T';
+        var theLast =
+          this.datepipe.transform(
+            new Date(this.yearSearch.getFullYear(), 11, 31),
+            'yyyy-MM-dd'
+          ) + 'T';
+        this.scheduleSearch.startTime = theFirst + '00:00:00';
+        this.scheduleSearch.endTime = theLast + '23:59:59';
+        break;
+      }
+    }
     this.pageNum = 1;
     this.getSearchPage();
   }
 
   clearFilter() {
-    this.scheduleSearch = {}
-    this.getSearchPage()
+    this.scheduleSearch = {};
+    this.startTimeSearch = null;
+    this.endTimeSearch = null;
+    this.monthSearch = null;
+    this.yearSearch = null;
+    this.dateOption = 'day';
+    this.getSearchPage();
   }
 
   singleClear(label: string) {
@@ -94,6 +161,11 @@ export class ScheduleComponent {
       case 'date':
         this.scheduleSearch.startTime = null;
         this.scheduleSearch.endTime = null;
+        this.startTimeSearch = null;
+        this.endTimeSearch = null;
+        this.monthSearch = null;
+        this.yearSearch = null;
+        this.dateOption = 'day';
         break;
       case 'trainingType':
         this.scheduleSearch.trainingType = null;
@@ -212,9 +284,9 @@ export class ScheduleComponent {
   save() {
     const dateStr = this.datepipe.transform(this.date, 'yyyy-MM-dd') + 'T';
     this.schedule.startTime =
-      dateStr + this.datepipe.transform(this.startTime, 'HH:mm:ss');
+      dateStr + this.datepipe.transform(this.startTime, 'HH:mm');
     this.schedule.endTime =
-      dateStr + this.datepipe.transform(this.endTime, 'HH:mm:ss');
+      dateStr + this.datepipe.transform(this.endTime, 'HH:mm');
     if (this.schedule.id) {
       this.scheduleService.update(this.schedule).subscribe(
         (response: any) => {
@@ -269,7 +341,60 @@ export class ScheduleComponent {
     this.date = new Date();
   }
 
-  export() {}
+  exportToExcel() {
+    this.scheduleService.getSearchAll(this.scheduleSearch).subscribe(
+      (response: any) => {
+        const result = response.data;
+        const rows = result.map((row) => ({
+          id: row.id,
+          sessionName: row.sessionName,
+          startTime: row.startTime,
+          endTime: row.endTime,
+          trainingType: row.trainingType,
+          clazzType: row.clazzType,
+          clazzDetails: row.clazzDetails,
+          trainers: row.trainers
+            .map((trainer, index) => `${index + 1}. ${trainer.fullName}`)
+            .join('\n'),
+          clazz: row.clazz.name,
+          organizer: row.organizer.fullName,
+        }));
+
+        const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(rows);
+
+        /**Generate workbook and add the worksheet**/
+        const wb: XLSX.WorkBook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+        XLSX.utils.sheet_add_aoa(
+          ws,
+          [
+            [
+              'ID',
+              'Session Name',
+              'Start Time',
+              'End Time',
+              'Training Type',
+              'Class Type',
+              'Class Detail',
+              'Trainers',
+              'Class Name',
+              'Organizer',
+            ],
+          ],
+          { origin: 'A1' }
+        );
+        /*save to file*/
+        XLSX.writeFile(wb, this.fileName);
+      },
+      (error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Rejected',
+          detail: error.error.message,
+        });
+      }
+    );
+  }
 
   edit(schedule: Schedule) {
     this.getTrainers();

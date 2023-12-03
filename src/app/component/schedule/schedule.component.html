@@ -11,7 +11,7 @@
       </p-button>
       <p-button
         styleClass="p-button-danger px-4 py-[10px] h-10 ml-2"
-        (onClick)="export()"
+        (onClick)="exportToExcel()"
         label="Export"
         icon="pi pi-download"
       >
@@ -90,22 +90,48 @@
               icon="pi pi-filter"
               [styleClass]="
                 'p-button-rounded p-button-text h-2 ' +
-                (scheduleSearch.startTime
+                (startTimeSearch || endTimeSearch || monthSearch || yearSearch
                   ? 'p-button-info'
                   : 'p-button-secondary')
               "
               (onClick)="opDate.toggle($event)"
             ></p-button>
             <p-overlayPanel #opDate [showCloseIcon]="true">
-              <input
-                type="text"
-                pInputText
-                id="dateSearch"
-                [(ngModel)]="scheduleSearch.startTime"
-                required
-                autofocus
-                class="transition-all outline outline-2 outline-transparent hover:border-blue-500 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline mt-1 p-2 w-full sm:text-sm border border-gray-300 rounded-md"
-              />
+              <div class="flex flex-col gap-3">
+                <div class="flex gap-3 justify-items-center">
+                    <p-radioButton name="dateSearch" value="day" [(ngModel)]="dateOption" inputId="dateSearch1"></p-radioButton>
+                    <div class="pt-3 w-[50px]">Day</div>
+                    <p-calendar
+                      [(ngModel)]="startTimeSearch"
+                      appendTo="body"
+                      [showButtonBar]="true"
+                      [readonlyInput]="true"
+                      styleClass="w-[112px]"
+                    ></p-calendar>
+                    <label class="pt-3">-</label>
+                    <p-calendar
+                      [(ngModel)]="endTimeSearch"
+                      appendTo="body"
+                      [showButtonBar]="true"
+                      [readonlyInput]="true"
+                      styleClass="w-[112px]"
+                    ></p-calendar>
+                </div>
+                
+                <div class="flex gap-3 justify-items-center">
+                    <p-radioButton name="dateSearch" value="month" [(ngModel)]="dateOption" inputId="dateSearch2"></p-radioButton>
+                    <div class="pt-3 w-[50px]">Month</div>
+                    <p-calendar [(ngModel)]="monthSearch" view="month" dateFormat="mm/yy" [readonlyInput]="true"
+                    styleClass="w-[112px]"></p-calendar>
+                </div>
+                
+                <div class="flex gap-3 justify-items-center">
+                    <p-radioButton name="dateSearch" value="year" [(ngModel)]="dateOption" inputId="dateSearch3"></p-radioButton>
+                    <div class="pt-3 w-[50px]">Year</div>
+                    <p-calendar [(ngModel)]="yearSearch" view="year" dateFormat="yy" [readonlyInput]="true"
+                    styleClass="w-[112px]"></p-calendar>
+                </div>
+            </div>
               <div class="flex justify-between mt-3">
                 <p-button
                   styleClass="p-button-outlined p-2 text-sm"
@@ -233,15 +259,6 @@
               (onClick)="opTrainerName.toggle($event)"
             ></p-button>
             <p-overlayPanel #opTrainerName [showCloseIcon]="true">
-              <!-- <input
-                type="text"
-                pInputText
-                id="trainerName"
-                [(ngModel)]="scheduleSearch.trainers"
-                required
-                autofocus
-                class="transition-all outline outline-2 outline-transparent hover:border-blue-500 focus:border-blue-500 focus:outline-2 focus:outline-blue-200 focus:outline mt-1 p-2 w-full sm:text-sm border border-gray-300 rounded-md"
-              /> -->
               <p-multiSelect
                 appendTo="body"
                 [options]="trainers"
@@ -341,7 +358,7 @@
           </div>
         </th>
         <th style="width: 8%">Organizer</th>
-        <th style="width: 2%"></th>
+        <th style="width: 2%">Actions</th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-schedule>
@@ -410,7 +427,7 @@
 </div>
 <p-dialog
   [(visible)]="dialog"
-  [style]="{ width: '550px' }"
+  [style]="{ width: '600px' }"
   header="Schedule Details"
   [modal]="true"
   styleClass="p-fluid"

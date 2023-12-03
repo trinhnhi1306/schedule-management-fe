@@ -37,4 +37,8 @@ export class ScheduleService {
     return this.httpClient.post<any>(apiUrl + "/search", schedule, { params: params }).pipe()
   }
 
+  getSearchAll(schedule: ScheduleSearch): Observable<any> {
+    return this.httpClient.post<any>(apiUrl + "/search/all", schedule).pipe()
+  }
+
 }
