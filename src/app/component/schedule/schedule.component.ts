@@ -348,8 +348,8 @@ export class ScheduleComponent {
         const rows = result.map((row) => ({
           id: row.id,
           sessionName: row.sessionName,
-          startTime: row.startTime,
-          endTime: row.endTime,
+          startTime: this.datepipe.transform(row.startTime, 'yyyy-MM-dd HH:mm:ss'),
+          endTime: this.datepipe.transform(row.endTime, 'yyyy-MM-dd HH:mm:ss'),
           trainingType: row.trainingType,
           clazzType: row.clazzType,
           clazzDetails: row.clazzDetails,
